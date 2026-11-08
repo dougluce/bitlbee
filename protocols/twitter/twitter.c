@@ -577,7 +577,6 @@ static void twitter_login(account_t * acc)
 {
 	struct im_connection *ic = imcb_new(acc);
 	struct twitter_data *td;
-	char name[strlen(acc->user) + 9];
 	url_t url;
 	char *s;
 
@@ -633,9 +632,10 @@ static void twitter_login(account_t * acc)
 		td->oauth_info = oauth_from_string(acc->pass, get_oauth_service(ic));
 	}
 
-	sprintf(name, "%s_%s", td->prefix, acc->user);
+	char *name = g_strdup_printf("%s_%s", td->prefix, acc->user);
 	imcb_add_buddy(ic, name, NULL);
 	imcb_buddy_status(ic, name, OPT_LOGGED_IN, NULL, NULL);
+	g_free(name);
 
 	td->log = g_new0(struct twitter_log_data, TWITTER_LOG_LENGTH);
 	td->log_id = -1;
