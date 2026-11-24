@@ -32,7 +32,7 @@ const struct oauth2_service oauth2_service_google =
 {
 	"https://accounts.google.com/o/oauth2/auth",
 	"https://accounts.google.com/o/oauth2/token",
-	"urn:ietf:wg:oauth:2.0:oob",
+	"http://localhost",
 	"https://www.googleapis.com/auth/googletalk",
 	"783993391592.apps.googleusercontent.com",
 	"6C-Zgf7Tr7gEQTPlBhMUgo7R",
