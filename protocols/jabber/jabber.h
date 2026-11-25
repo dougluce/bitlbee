@@ -94,6 +94,7 @@ struct jabber_data {
 	char *internal_jid;
 
 	const struct oauth2_service *oauth2_service;
+	struct oauth2_service *oauth2_service_own; /* Per-account copy, if any. */
 	char *oauth2_access_token;
 
 	/* After changing one of these two (or the priority setting), call

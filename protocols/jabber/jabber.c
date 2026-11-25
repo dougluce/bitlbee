@@ -32,8 +32,54 @@
 #include "bitlbee.h"
 #include "jabber.h"
 #include "oauth.h"
+#include "oauth2.h"
 
 GSList *jabber_connections;
+
+/* Build this account's Google OAuth2 service: the built-in client, with any
+   oauth_client_id / oauth_client_secret / oauth_redirect_uri settings
+   overriding it. A custom client ID with no secret uses an empty secret. */
+static void jabber_oauth2_service_setup(struct jabber_data *jd, account_t *acc)
+{
+	const struct oauth2_service *base = &oauth2_service_google;
+	const char *id = set_getstr(&acc->set, "oauth_client_id");
+	const char *secret = set_getstr(&acc->set, "oauth_client_secret");
+	const char *redirect = set_getstr(&acc->set, "oauth_redirect_uri");
+	struct oauth2_service *s = g_new0(struct oauth2_service, 1);
+
+	s->auth_url = g_strdup(base->auth_url);
+	s->token_url = g_strdup(base->token_url);
+	s->redirect_url = g_strdup(redirect ? redirect : base->redirect_url);
+	s->scope = g_strdup(base->scope);
+	if (id) {
+		s->consumer_key = g_strdup(id);
+		s->consumer_secret = g_strdup(secret ? secret : "");
+	} else {
+		s->consumer_key = g_strdup(base->consumer_key);
+		s->consumer_secret = g_strdup(base->consumer_secret);
+	}
+
+	jd->oauth2_service_own = s;
+	jd->oauth2_service = s;
+}
+
+static void jabber_oauth2_service_free(struct jabber_data *jd)
+{
+	struct oauth2_service *s = jd->oauth2_service_own;
+
+	if (!s) {
+		return;
+	}
+	g_free(s->auth_url);
+	g_free(s->token_url);
+	g_free(s->redirect_url);
+	g_free(s->scope);
+	g_free(s->consumer_key);
+	g_free(s->consumer_secret);
+	g_free(s);
+	jd->oauth2_service_own = NULL;
+	jd->oauth2_service = NULL;
+}
 
 /* First enty is the default */
 static const int jabber_port_list[] = {
@@ -81,6 +127,14 @@ static void jabber_init(account_t *acc)
 	s->flags |= SET_NOSAVE | ACC_SET_OFFLINE_ONLY | SET_NULL_OK;
 
 	set_add(&acc->set, "oauth", "false", set_eval_oauth, acc);
+
+	/* Optional: use your own Google OAuth client instead of the built-in one. */
+	s = set_add(&acc->set, "oauth_client_id", NULL, NULL, acc);
+	s->flags |= SET_NULL_OK;
+	s = set_add(&acc->set, "oauth_client_secret", NULL, NULL, acc);
+	s->flags |= SET_NULL_OK | SET_PASSWORD;
+	s = set_add(&acc->set, "oauth_redirect_uri", NULL, NULL, acc);
+	s->flags |= SET_NULL_OK;
 
 	if (strcmp(acc->prpl->name, "hipchat") == 0) {
 		set_setstr(&acc->set, "server", "chat.hipchat.com");
@@ -176,7 +230,7 @@ static void jabber_login(account_t *acc)
 
 		/* There are no other options atm, so assume google for everything 
 		   Facebook and MSN XMPP used to be here. RIP. */
-		jd->oauth2_service = &oauth2_service_google;
+		jabber_oauth2_service_setup(jd, ic->acc);
 
 		oauth_params_parse(&p_in, ic->acc->pass);
 
@@ -372,6 +426,7 @@ static void jabber_logout(struct im_connection *ic)
 	g_checksum_free(jd->cached_id_prefix);
 
 	g_free(jd->oauth2_access_token);
+	jabber_oauth2_service_free(jd);
 	g_free(jd->away_message);
 	g_free(jd->internal_jid);
 	g_free(jd->gmail_tid);
