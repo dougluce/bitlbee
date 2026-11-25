@@ -307,10 +307,10 @@ static void jabber_generate_id_hash(struct jabber_data *jd)
 	char *s;
 
 	jd->cached_id_prefix = g_checksum_new(G_CHECKSUM_MD5);
-	g_checksum_update(jd->cached_id_prefix, jd->username, strlen(jd->username));
-	g_checksum_update(jd->cached_id_prefix, jd->server, strlen(jd->server));
+	g_checksum_update(jd->cached_id_prefix, (const guchar *) jd->username, strlen(jd->username));
+	g_checksum_update(jd->cached_id_prefix, (const guchar *) jd->server, strlen(jd->server));
 	s = set_getstr(&jd->ic->acc->set, "resource");
-	g_checksum_update(jd->cached_id_prefix, s, strlen(s));
+	g_checksum_update(jd->cached_id_prefix, (const guchar *) s, strlen(s));
 	random_bytes(binbuf, 4);
 	g_checksum_update(jd->cached_id_prefix, binbuf, 4);
 }
