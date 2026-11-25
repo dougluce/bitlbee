@@ -55,6 +55,10 @@ typedef struct conf {
 	char *ft_listen;
 	char **protocols;
 	char *cafile;
+	/* Google OAuth client overrides (jabber). NULL = built-in default. */
+	char *google_oauth_client_id;
+	char *google_oauth_client_secret;
+	char *google_oauth_redirect_uri;
 } conf_t;
 
 G_GNUC_MALLOC conf_t *conf_load(int argc, char *argv[]);

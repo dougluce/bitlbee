@@ -36,9 +36,12 @@
 
 GSList *jabber_connections;
 
-/* Build this account's Google OAuth2 service: the built-in client, with any
-   oauth_client_id / oauth_client_secret / oauth_redirect_uri settings
-   overriding it. A custom client ID with no secret uses an empty secret. */
+/* Build this account's Google OAuth2 service. Client ID and secret come as a
+   pair: the account's oauth_client_id/oauth_client_secret if set, else the
+   GoogleOAuthClientID/GoogleOAuthClientSecret from bitlbee.conf, else the
+   built-in client. A client ID with no secret uses an empty secret. The
+   redirect URI is taken from oauth_redirect_uri, then GoogleOAuthRedirectURI,
+   then the built-in default. */
 static void jabber_oauth2_service_setup(struct jabber_data *jd, account_t *acc)
 {
 	const struct oauth2_service *base = &oauth2_service_google;
@@ -46,6 +49,14 @@ static void jabber_oauth2_service_setup(struct jabber_data *jd, account_t *acc)
 	const char *secret = set_getstr(&acc->set, "oauth_client_secret");
 	const char *redirect = set_getstr(&acc->set, "oauth_redirect_uri");
 	struct oauth2_service *s = g_new0(struct oauth2_service, 1);
+
+	if (!id && global.conf->google_oauth_client_id) {
+		id = global.conf->google_oauth_client_id;
+		secret = global.conf->google_oauth_client_secret;
+	}
+	if (!redirect) {
+		redirect = global.conf->google_oauth_redirect_uri;
+	}
 
 	s->auth_url = g_strdup(base->auth_url);
 	s->token_url = g_strdup(base->token_url);

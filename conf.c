@@ -193,6 +193,9 @@ static void conf_free(conf_t *conf)
 	g_free(conf->cafile);
 	g_free(conf->configdir);
 	g_free(conf->ft_listen);
+	g_free(conf->google_oauth_client_id);
+	g_free(conf->google_oauth_client_secret);
+	g_free(conf->google_oauth_redirect_uri);
 	g_free(conf->hostname);
 	g_free(conf->iface_in);
 	g_free(conf->iface_out);
@@ -297,6 +300,15 @@ static int conf_loadini(conf_t *conf, char *file)
 					return 0;
 				}
 				conf->ping_interval = i;
+			} else if (g_strcasecmp(ini->key, "googleoauthclientid") == 0) {
+				g_free(conf->google_oauth_client_id);
+				conf->google_oauth_client_id = g_strdup(ini->value);
+			} else if (g_strcasecmp(ini->key, "googleoauthclientsecret") == 0) {
+				g_free(conf->google_oauth_client_secret);
+				conf->google_oauth_client_secret = g_strdup(ini->value);
+			} else if (g_strcasecmp(ini->key, "googleoauthredirecturi") == 0) {
+				g_free(conf->google_oauth_redirect_uri);
+				conf->google_oauth_redirect_uri = g_strdup(ini->value);
 			} else if (g_strcasecmp(ini->key, "pingtimeout") == 0) {
 				if (sscanf(ini->value, "%d", &i) != 1) {
 					fprintf(stderr, "Invalid %s value: %s\n", ini->key, ini->value);
